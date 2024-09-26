@@ -9,6 +9,9 @@ in hex the [7:4] 4 bit number to display on the left and the [3:0] 4 bit number 
 The diagram is shown in github.com/jacksonphilion/e155_lab3 under notes and extras.
 */
 
+typedef enum logic [2:0]    {scanCol0, scanCol1, scanCol2, scanCol3, 
+                            initialize, verify, display, hold} statetype;
+
 module scanFSM(
     input   logic   clk,    reset,
     input   logic   [3:0]   sense,
@@ -19,43 +22,14 @@ module scanFSM(
     statetype state, nextstate;
     logic   [3:0]   rowSenseHold;
     logic   [3:0]   colScanHold;
-    logic           ensureEN;
-    logic   [3:0]   digitOne, digitZero;
+    logic   [3:0]   digitOne, digitZero, tempDigit;
+    logic           ensureEN, topRail, botRail;
 
-    // Default States
-    ensureEN = 0;
+    // Call ensureCounter Module and feed in the control lines. This gets used in state initialize and verify.
+    ensureCounter ensureCounterCall(clk, reset, ensureEN, sense, rowSenseHold, topRail, botRail);
 
-    // State Output Logic
-    always_comb
-        case (state)
-            scanCol0:   scan = 4'b1110;
-            scanCol1:   scan = 4'b1101;
-            scanCol2:   scan = 4'b1011;
-            scanCol3:   scan = 4'b0111;
-            initialize: ensureEN = 1;
-                        scan = colScanHold;
-            verify:     ensureEN = 1;
-                        scan = colScanHold;
-            display:    scan = colScanHold;
-            hold:       scan = colScanHold;
-            default:
-        endcase
-
-    // State Register and rowHold
-    always_ff @(posedge clk) begin
-        if (~reset) state <= scanCol0;
-        else begin
-            if (nextstate == initialize)
-                rowSenseHold <= sense;
-                colScanHold <= scan;
-            state <= nextstate;
-            
-        end
-        if (state == display) begin
-            digitZero <= tempDigit;
-            digitOne <= digitZero;
-        end
-    end
+    // Call keypadDecoder Module and feed it the control lines. This gets used when state display is reached.
+    keypadDecoder keypadDecoderCall(colScanHold, rowSenseHold, tempDigit);
 
     // Nextstate Logic
     always_comb
@@ -68,13 +42,54 @@ module scanFSM(
                         else                nextstate = scanCol3;
             scanCol3:   if (sense !== 4'b0) nextstate = initialize;
                         else                nextstate = scanCol0;
-            initialize:
-            verify:
-            display:
-            hold:
-            default:
+            initialize: nextstate = verify;
+            verify:     if (botrail)        nextstate = scanCol0;
+                        else if (topRail)   nextstate = display;
+                        else                nextstate = verify;
+            display:    nextstate = hold;
+            hold:       if (sense !== )
+            default:    nextstate = scanCol0;
+        endcase
+
+    // State Register and rowHold
+    always_ff @(posedge clk)
+        if (~reset) state <= scanCol0;
+        else begin
+            if (nextstate == initialize) begin
+                rowSenseHold <= sense;
+                colScanHold <= ~scan;
+            end
+            if (nextstate == display) begin
+                digitZero <= tempDigit;
+                digitOne <= digitZero;
+            end
+            state <= nextstate;
+        end
+
+    // State Output Logic
+    always_comb
+        case (state)
+            scanCol0:   begin scan = 4'b1110;
+                        ensureEN = 0; end
+            scanCol1:   begin scan = 4'b1101;
+                        ensureEN = 0; end
+            scanCol2:   begin scan = 4'b1011;
+                        ensureEN = 0; end
+            scanCol3:   begin scan = 4'b0111;
+                        ensureEN = 0; end
+            initialize: begin ensureEN = 1;
+                        scan = colScanHold; end
+            verify:     begin ensureEN = 1;
+                        scan = colScanHold; end
+            display:    begin scan = colScanHold;
+                        ensureEN = 0; end
+            hold:       begin scan = colScanHold;
+                        ensureEN = 0; end
+            default:    begin scan = 4'b1111;
+                        ensureEN = 0; end
         endcase
 
     assign displayDigits[7:4] = digitOne;
     assign displayDigits[3:0] = digitZero;
+
 endmodule

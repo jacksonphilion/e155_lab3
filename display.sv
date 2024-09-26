@@ -45,7 +45,6 @@ module displayMultiplexer (
     assign displayR = ~toggle[0];
 	
 	sevenSegLogic segLogicCall(intSwitch, segment);
-    
 endmodule
 
 module frequencyGenerator #(parameter divisionFactor=24000000) (

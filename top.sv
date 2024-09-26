@@ -6,8 +6,6 @@ Running this top module requires scanFSM.sv, ensureCounter.sv, pinReaders.sv, an
 the same root directory. See my github.com/jacksonphilion/e155_lab3 for more.
 */
 
-typedef enum logic [2:0] {scanCol0, scanCol1, scanCol2, scanCol3, initialize, verify, display, hold} statetype;
-
 module top(
     input   logic   reset,
     input   logic   [3:0]   rowPins,
@@ -19,11 +17,11 @@ module top(
     // High Frequency 48MHz Oscillator to initialize clk signal, with a buffer if I need to scale
     logic int_osc, clk;
     HSOSC hf_osc (.CLKHFPU(1'b1), .CLKHFEN(1'b1), .CLKHF(int_osc));
-    assign clk = int_osc;
+    frequencyGenerator #(.divisionFactor(10000)) freqGenCall (int_osc, reset, clk);
 
     // Call for the display multiplexing functions
     logic   [7:0]   displayDigits;
-    displayMultiplexer disMultCall(clk, displayDigits, reset, seg, disL, disR);
+    displayMultiplexer disMultCall(int_osc, displayDigits, reset, seg, disL, disR);
     
     // Call for the scanning FSM
     logic   [3:0]   sense;
