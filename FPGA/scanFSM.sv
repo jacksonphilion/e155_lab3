@@ -16,7 +16,8 @@ module scanFSM(
     input   logic   clk,    reset,
     input   logic   [3:0]   sense,
     output  logic   [3:0]   scan,
-    output  logic   [7:0]   displayDigits
+    output  logic   [7:0]   displayDigits,
+	output  logic   [3:0]   led
     );
 
     statetype state, nextstate;
@@ -48,22 +49,23 @@ module scanFSM(
                         else                nextstate = verify;
             display:    nextstate = hold;
             hold:       if (|sense)         nextstate = hold;
-			else		    nextstate = scanCol0;
+						else		    nextstate = scanCol0;
             default:    nextstate = scanCol0;
         endcase
 
     // State Register and rowHold
     always_ff @(posedge clk)
-        if (~reset) state <= scanCol0;
+        if (~reset) begin
+		state <= scanCol0;
+		digitZero <= 0;
+		digitOne <= 0; end
         else begin
             if (nextstate == initialize) begin
                 rowSenseHold <= sense;
-                colScanHold <= ~scan;
-            end
+                colScanHold <= ~scan; end
             if (nextstate == display) begin
                 digitZero <= tempDigit;
-                digitOne <= digitZero;
-            end
+                digitOne <= digitZero; end
             state <= nextstate;
         end
 
@@ -92,5 +94,34 @@ module scanFSM(
 
     assign displayDigits[7:4] = digitOne;
     assign displayDigits[3:0] = digitZero;
+
+    // Add in debug LED logic
+	assign led[0] = (state==scanCol0);
+	assign led[1] = (state==initialize);
+	assign led[2] = (state==verify);
+	assign led[3] = (state==hold);
+
+endmodule
+
+module scanFsmTestbench();
+
+  // Create necessary variables
+  logic clk, reset;
+  logic   [3:0]   sense;
+  logic   [3:0]   scan;
+  logic   [7:0]   displayDigits;
+  logic	  [4:0]   led;
+
+  // Call DUT module
+  scanFSM dut(clk, reset, sense, scan, displayDigits, led);
+
+  // Clock cycle and pulse reset (recall active low)
+  always begin clk = 1; #5; clk=0; #5; end
+  initial begin reset = 0; #15; reset=1; end
+
+  // Feed in the desired signals. start like keypad off, read in on row 1 (during column 0 I believe, so a 4)
+  initial begin 
+	  sense = 4'b0000; #53; sense = 4'b0010; #150; sense = 4'b0000;
+  end
 
 endmodule

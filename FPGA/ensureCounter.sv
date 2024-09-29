@@ -7,7 +7,7 @@ the states described below. The diagram is shown in github.com/jacksonphilion/e1
 and extras.
 */
 
-typedef enum logic [1:0] {off, boot, on} ensureCounterState;
+typedef enum logic [1:0]	{off, boot, on} ensureCounterState;
 
 module  ensureCounter #(parameter ensureTop=16) (
     input   logic   clk,
