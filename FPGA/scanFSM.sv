@@ -48,8 +48,8 @@ module scanFSM(
                         else if (topRail)   nextstate = display;
                         else                nextstate = verify;
             display:    nextstate = hold;
-            hold:       if (|sense)         nextstate = hold;
-						else		    nextstate = scanCol0;
+            hold:       if (~botRail)       nextstate = hold;
+						else		    	nextstate = scanCol0;
             default:    nextstate = scanCol0;
         endcase
 
@@ -57,8 +57,8 @@ module scanFSM(
     always_ff @(posedge clk)
         if (~reset) begin
 		state <= scanCol0;
-		digitZero <= 0;
-		digitOne <= 0; end
+		digitZero <= 4'b0;
+		digitOne <= 4'b0; end
         else begin
             if (nextstate == initialize) begin
                 rowSenseHold <= sense;
@@ -81,13 +81,13 @@ module scanFSM(
             scanCol3:   begin scan = 4'b0111;
                         ensureEN = 0; end
             initialize: begin ensureEN = 1;
-                        scan = colScanHold; end
+                        scan = ~colScanHold; end
             verify:     begin ensureEN = 1;
-                        scan = colScanHold; end
-            display:    begin scan = colScanHold;
-                        ensureEN = 0; end
-            hold:       begin scan = colScanHold;
-                        ensureEN = 0; end
+                        scan = ~colScanHold; end
+            display:    begin scan = ~colScanHold;
+                        ensureEN = 1; end
+            hold:       begin scan = ~colScanHold;
+                        ensureEN = 1; end
             default:    begin scan = 4'b1111;
                         ensureEN = 0; end
         endcase
@@ -96,10 +96,10 @@ module scanFSM(
     assign displayDigits[3:0] = digitZero;
 
     // Add in debug LED logic
-	assign led[0] = (state==scanCol0);
-	assign led[1] = (state==initialize);
-	assign led[2] = (state==verify);
-	assign led[3] = (state==hold);
+	assign led[0] = ((state==scanCol0)|(state==scanCol1)|(state==scanCol2)|(state==scanCol3));
+	assign led[1] = (state==verify);
+	assign led[2] = (state==hold);
+	assign led[3] = (state==ensureEN);
 
 endmodule
 

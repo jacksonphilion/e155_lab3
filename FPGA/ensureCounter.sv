@@ -9,6 +9,7 @@ and extras.
 
 typedef enum logic [1:0]	{off, boot, on} ensureCounterState;
 
+// ensureTop MAX is 65535
 module  ensureCounter #(parameter ensureTop=16) (
     input   logic   clk,
     input   logic   reset,
@@ -35,15 +36,16 @@ module  ensureCounter #(parameter ensureTop=16) (
     // Registers
     always_ff @(posedge clk) begin
         // State Register and Reset
-        if (~reset) state <= off;
+        if (~reset) begin state <= off; counter<=(ensureTop/2); end
         else state <= nextstate;
+			
         // Counter Register by State
         if (state == boot) // if in the boot state, set the counter to the middle of the range
             counter <= (ensureTop/2);
         else if (state == on) // if in count and wait state, then count according to pin levels. Sense is the live signal, rowSenseHold is the stored target signal. If they match, counter up; otherwise, counter down.
             if ((sense == rowSenseHold)&(counter<ensureTop)) counter <= counter+1;
             else if ((~(sense == rowSenseHold))&(counter>0)) counter <= counter-1;
-	    else	counter <= counter;
+			else	counter <= counter;
         else
             counter <= (ensureTop/2);
     end

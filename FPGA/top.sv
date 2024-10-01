@@ -15,10 +15,11 @@ module top(
 	output  logic   [4:0]   led
     );
 
-    // High Frequency 48MHz Oscillator to initialize clk signal, with a buffer if I need to scale
-    logic int_osc, clk;
+    // High Frequency 48MHz Oscillator to initialize clk signal, and divide down the clock without a reset.
+    logic int_osc, clk, tieHigh;
+	assign tieHigh = 1'b1;
     HSOSC hf_osc (.CLKHFPU(1'b1), .CLKHFEN(1'b1), .CLKHF(int_osc));
-    frequencyGenerator #(.divisionFactor(48000000)) freqGenCall (int_osc, reset, clk);
+    frequencyGenerator #(.divisionFactor(48000)) freqGenCall (int_osc, tieHigh, clk);
 	assign led[4] = clk;
 	
     // Call for the display multiplexing functions
