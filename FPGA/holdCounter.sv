@@ -7,7 +7,7 @@ next state until no button is still pressed.
 
 typedef enum logic [1:0]	{holdOff, holdBoot, holdOn} holdCounterState;
 
-module  holdCounter #(parameter holdTop=16) (
+module  holdCounter #(parameter holdTop=8) (
     input   logic   clk,
     input   logic   reset,
     input   logic   enable,

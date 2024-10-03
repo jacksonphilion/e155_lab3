@@ -9,7 +9,7 @@ in hex the [7:4] 4 bit number to display on the left and the [3:0] 4 bit number 
 The diagram is shown in github.com/jacksonphilion/e155_lab3 under notes and extras.
 */
 
-typedef enum logic [2:0]    {scanCol0, scanCol1, scanCol2, scanCol3, 
+typedef enum logic [3:0]    {scanCol0, scanCol1, scanCol2, scanCol3, 
                             initialize, verify, display, hold, bootDelay1, bootDelay2} statetype;
 
 module scanFSM(
@@ -17,7 +17,7 @@ module scanFSM(
     input   logic   [3:0]   sense,
     output  logic   [3:0]   scan,
     output  logic   [7:0]   displayDigits,
-	output  logic   [3:0]   led
+	output  logic   [4:0]   led
     );
 
     statetype state, nextstate;
@@ -124,9 +124,16 @@ module scanFSM(
 
     // Add in debug LED logic
 	assign led[0] = ((state==scanCol0)|(state==scanCol1)|(state==scanCol2)|(state==scanCol3));
+	assign led[1] = (rowSenseHold[0]);
+	assign led[2] = (rowSenseHold[1]);
+	assign led[3] = (rowSenseHold[2]);
+	assign led[4] = (rowSenseHold[3]);
+	
+	/* Inexplicably Broken Code
 	assign led[1] = (state==verify);
 	assign led[2] = (state==hold);
-	assign led[3] = (ensureEN);
+	assign led[3] = ((rowSenseHold==4'b0100)&(colScanHold==4'b0100));
+	assign led[4] = (clk); */
 
 endmodule
 

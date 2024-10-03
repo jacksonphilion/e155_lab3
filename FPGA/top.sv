@@ -20,7 +20,6 @@ module top(
 	assign tieHigh = 1'b1;
     HSOSC hf_osc (.CLKHFPU(1'b1), .CLKHFEN(1'b1), .CLKHF(int_osc));
     frequencyGenerator #(.divisionFactor(48000)) freqGenCall (int_osc, tieHigh, clk);
-	assign led[4] = clk;
 	
     // Call for the display multiplexing functions
     logic   [7:0]   displayDigits, flipDigits;
@@ -29,9 +28,9 @@ module top(
     
     // Call for the scanning FSM
     logic   [3:0]   sense;
-    scanFSM scanFSMCall(clk, reset, sense, colPins, displayDigits, led[3:0]);
+    scanFSM scanFSMCall(clk, reset, sense, colPins, displayDigits, led);
 
-    pinReaderDirect pinDirectCall(rowPins,sense);
+    pinReaderSynchronized pinSynchronizedCall(clk, reset, rowPins,sense);
 
 endmodule
 
@@ -47,13 +46,13 @@ module topSim(
     // Call for the display multiplexing functions
     logic   [7:0]   displayDigits, flipDigits;
 	assign flipDigits = ~displayDigits;
-    displayMultiplexer disMultCall(clk, flipDigits, reset, seg, disL, disR);
+    displayMultiplexer disMultCall(int_osc, flipDigits, reset, seg, disL, disR);
     
     // Call for the scanning FSM
     logic   [3:0]   sense;
     scanFSM scanFSMCall(clk, reset, sense, colPins, displayDigits, led[3:0]);
 
-    pinReaderDirect pinDirectCall(rowPins,sense);
+    pinReaderSynchronized pinSynchronizedCall(clk, reset, rowPins, sense);
 
 endmodule
 
@@ -73,7 +72,7 @@ module topSimTestbench();
 	topSim topSimCall(clk, reset, rowPins, disL, disR, seg, colPins, led);
 
 	// Create the signals that I want to feed in
-	initial rowPins = 4'b0;
+	initial rowPins = 4'b1111;
 
 endmodule
 

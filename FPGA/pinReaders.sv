@@ -31,7 +31,7 @@ module pinReaderSynchronized(
     // Create synchronizer with nonblocking statements, so that the synthesizer is forced to generate adjacent flops
     always_ff @(posedge clk)
         if (~reset) begin sync <= 4'b0000;      sense <= 4'b0000; end
-        else        begin sync <= int_sense;    sense <= sync;
+        else        begin sync <= int_sense;    sense <= sync;  end
     // Pin logic to flip bit polarity and ignore multiple buttons
     always_comb
         case (pin)
@@ -42,4 +42,18 @@ module pinReaderSynchronized(
 			4'b1111:	int_sense = 4'b0000;
             default:    int_sense = 4'b1111;
         endcase
+endmodule
+
+module pinSyncTestbench();
+	// make signals
+	logic clk, reset;
+	logic [3:0] pin, sense;
+	always begin clk = 1; #5; clk = 0; #5; end
+	initial begin reset = 0; #20; reset = 1; end
+
+	// initialize DUT
+	pinReaderSynchronized dut(clk, reset, pin, sense);
+
+	// feed signals
+	initial begin pin = 4'b1111; #34; pin = 4'b1101; #40; pin = 4'b0111; #40; pin = 4'b1111; end
 endmodule
