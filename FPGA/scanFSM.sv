@@ -10,7 +10,7 @@ The diagram is shown in github.com/jacksonphilion/e155_lab3 under notes and extr
 */
 
 typedef enum logic [2:0]    {scanCol0, scanCol1, scanCol2, scanCol3, 
-                            initialize, verify, display, hold} statetype;
+                            initialize, verify, display, hold, bootDelay1, bootDelay2} statetype;
 
 module scanFSM(
     input   logic   clk,    reset,
@@ -22,7 +22,7 @@ module scanFSM(
 
     statetype state, nextstate;
     logic   [3:0]   rowSenseHold;
-    logic   [3:0]   colScanHold;
+    logic   [3:0]   colScanHold, onePriorScan, twoPriorScan;
     logic   [3:0]   digitOne, digitZero, tempDigit;
     logic           ensureEN, holdEN, topRail, botRail, holdBotRail, exitScan;
 
@@ -39,6 +39,8 @@ module scanFSM(
     assign exitScan = ((sense==4'b0001)|(sense==4'b0010)|(sense==4'b0100)|(sense==4'b1000));
     always_comb
         case (state)
+            bootDelay1: nextstate = bootDelay2;
+            bootDelay2: nextstate = scanCol0;
             scanCol0:   if (exitScan) nextstate = initialize;
                         else                nextstate = scanCol1;
             scanCol1:   if (exitScan) nextstate = initialize;
@@ -48,34 +50,46 @@ module scanFSM(
             scanCol3:   if (exitScan) nextstate = initialize;
                         else                nextstate = scanCol0;
             initialize: nextstate = verify;
-            verify:     if (botRail)        nextstate = scanCol0;
+            verify:     if (botRail)        nextstate = bootDelay1;
                         else if (topRail)   nextstate = display;
                         else                nextstate = verify;
             display:    nextstate = hold;
             hold:       if (~holdBotRail)       nextstate = hold;
-						else		    	nextstate = scanCol0;
-            default:    nextstate = scanCol0;
+						else		    	nextstate = bootDelay1;
+            default:    nextstate = bootDelay1;
         endcase
 
     // State Register and rowHold
     always_ff @(posedge clk)
         if (~reset) begin
-		state <= scanCol0;
+		state <= bootDelay1;
 		digitZero <= 4'b0;
 		digitOne <= 4'b0; end
         else begin
             if (nextstate == initialize) begin
                 rowSenseHold <= sense;
-                colScanHold <= ~scan; end
+                colScanHold <= ~twoPriorScan; end
             if (nextstate == display) begin
                 digitZero <= tempDigit;
                 digitOne <= digitZero; end
             state <= nextstate;
         end
 
+    // Add scan register to make up for the synchronizer's delay
+    always_ff @(posedge clk) begin
+        onePriorScan <= scan;
+        twoPriorScan <= onePriorScan;
+    end
+
     // State Output Logic
     always_comb
         case (state)
+            bootDelay1: begin scan = 4'b1011;
+                        ensureEN = 0; 
+                        holdEN = 0; end
+            bootDelay2: begin scan = 4'b0111;
+                        ensureEN = 0; 
+                        holdEN = 0; end
             scanCol0:   begin scan = 4'b1110;
                         ensureEN = 0; 
                         holdEN = 0; end
