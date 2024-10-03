@@ -5,7 +5,7 @@ This module is part of e155_lab3, and supports scanFSM in waiting to move to the
 next state until no button is still pressed.
 */
 
-typedef enum logic [1:0]	{off, boot, on} holdCounterState;
+typedef enum logic [1:0]	{holdOff, holdBoot, holdOn} holdCounterState;
 
 module  holdCounter #(parameter holdTop=16) (
     input   logic   clk,
@@ -21,24 +21,24 @@ module  holdCounter #(parameter holdTop=16) (
     // Counter next state logic
     always_comb
         case (state)
-            off:    begin if  (enable)    nextstate = boot;
-                    else            nextstate = off; end
-            boot:   nextstate = on;
-            on:     begin if  (~enable)   nextstate = off;
-                    else            nextstate = on; end
-            default: nextstate = off;
+            holdOff:    begin if  (enable)    nextstate = holdBoot;
+                    else            nextstate = holdOff; end
+            holdBoot:   nextstate = holdOn;
+            holdOn:     begin if  (~enable)   nextstate = holdOff;
+                    else            nextstate = holdOn; end
+            default: nextstate = holdOff;
 	endcase
 
     // Registers
     always_ff @(posedge clk) begin
         // State Register and Reset
-        if (~reset) begin state <= off; counter<=(holdTop/2); end
+        if (~reset) begin state <= holdOff; counter<=(holdTop/2); end
         else state <= nextstate;
 			
         // Counter Register by State
-        if (state == boot) // if in the boot state, set the counter to the middle of the range
+        if (state == holdBoot) // if in the holdBoot state, set the counter to the middle of the range
             counter <= (holdTop/2);
-        else if (state == on) // if in count and wait state, then count according to pin levels. Sense is the live signal. If on, counter up; otherwise, counter down.
+        else if (state == holdOn) // if in count and wait state, then count according to pin levels. Sense is the live signal. If holdOn, counter up; otherwise, counter down.
             if ((|sense)&(counter<holdTop)) counter <= counter+1;
             else if ((~(|sense))&(counter>0)) counter <= counter-1;
 			else	counter <= counter;

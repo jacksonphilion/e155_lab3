@@ -17,7 +17,7 @@ module pinReaderDirect(
             4'b1101:    int_sense = 4'b0010;
             4'b1110:    int_sense = 4'b0001;
 			4'b1111:	int_sense = 4'b0000;
-            default:    int_sense = 4'b0000;
+            default:    int_sense = 4'b1111;
         endcase
 endmodule
 

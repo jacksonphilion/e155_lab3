@@ -94,10 +94,10 @@ module scanFSM(
                         scan = ~colScanHold; 
                         holdEN = 0; end
             display:    begin scan = 4'b0;
-                        ensureEN = 1; 
+                        ensureEN = 0; 
                         holdEN = 1; end
             hold:       begin scan = 4'b0;
-                        ensureEN = 1; 
+                        ensureEN = 0; 
                         holdEN = 1; end
             default:    begin scan = 4'b1;
                         ensureEN = 0; 
@@ -111,7 +111,7 @@ module scanFSM(
 	assign led[0] = ((state==scanCol0)|(state==scanCol1)|(state==scanCol2)|(state==scanCol3));
 	assign led[1] = (state==verify);
 	assign led[2] = (state==hold);
-	assign led[3] = (state==ensureEN);
+	assign led[3] = (ensureEN);
 
 endmodule
 

@@ -18,13 +18,12 @@
 				<BScanVal>0</BScanVal>
 			</Bypass>
 			<File>../../impl_1/e155_lab3_radiant_impl_1.bin</File>
-			<FileTime>09/30/24 17:50:43</FileTime>
-			<JedecChecksum>0x4505</JedecChecksum>
+			<FileTime>10/02/24 20:34:11</FileTime>
+			<JedecChecksum>0xE652</JedecChecksum>
 			<MemoryType>External SPI Flash Memory (SPI FLASH)</MemoryType>
 			<Operation>Erase,Program,Verify</Operation>
 			<Option>
 				<SVFVendor>JTAG STANDARD</SVFVendor>
-				<SVFProcessor>SVF Processor</SVFProcessor>
 				<AccessMode>Direct Programming</AccessMode>
 			</Option>
 			<FPGALoader>
@@ -48,7 +47,6 @@
 					<Option>
 						<SVFVendor>JTAG STANDARD</SVFVendor>
 						<IOState>HighZ</IOState>
-						<SVFProcessor>SVF Processor</SVFProcessor>
 						<AccessMode>Direct Programming</AccessMode>
 					</Option>
 				</Device>
@@ -83,7 +81,6 @@
 					</LocalChainList>
 					<Option>
 						<SVFVendor>JTAG STANDARD</SVFVendor>
-						<SVFProcessor>SVF Processor</SVFProcessor>
 					</Option>
 				</Device>
 			</FPGADevice>
