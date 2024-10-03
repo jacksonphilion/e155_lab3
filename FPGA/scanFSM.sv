@@ -24,13 +24,16 @@ module scanFSM(
     logic   [3:0]   rowSenseHold;
     logic   [3:0]   colScanHold;
     logic   [3:0]   digitOne, digitZero, tempDigit;
-    logic           ensureEN, topRail, botRail;
+    logic           ensureEN, holdEN, topRail, botRail, holdBotRail;
 
     // Call ensureCounter Module and feed in the control lines. This gets used in state initialize and verify.
     ensureCounter ensureCounterCall(clk, reset, ensureEN, sense, rowSenseHold, topRail, botRail);
 
     // Call keypadDecoder Module and feed it the control lines. This gets used when state display is reached.
     keypadDecoder keypadDecoderCall(colScanHold, rowSenseHold, tempDigit);
+
+    // Call holdCounter module and feed it the control lines. This gets used in state hold to loop the FSM until a button hasn't been pressed for holdTop cycles.
+    holdCounter holdCounterCall(clk, reset, holdEN, sense, holdBotRail);
 
     // Nextstate Logic
     always_comb
@@ -48,7 +51,7 @@ module scanFSM(
                         else if (topRail)   nextstate = display;
                         else                nextstate = verify;
             display:    nextstate = hold;
-            hold:       if (~botRail)       nextstate = hold;
+            hold:       if (~holdBotRail)       nextstate = hold;
 						else		    	nextstate = scanCol0;
             default:    nextstate = scanCol0;
         endcase
@@ -73,23 +76,32 @@ module scanFSM(
     always_comb
         case (state)
             scanCol0:   begin scan = 4'b1110;
-                        ensureEN = 0; end
+                        ensureEN = 0; 
+                        holdEN = 0; end
             scanCol1:   begin scan = 4'b1101;
-                        ensureEN = 0; end
+                        ensureEN = 0; 
+                        holdEN = 0; end
             scanCol2:   begin scan = 4'b1011;
-                        ensureEN = 0; end
+                        ensureEN = 0; 
+                        holdEN = 0; end
             scanCol3:   begin scan = 4'b0111;
-                        ensureEN = 0; end
+                        ensureEN = 0; 
+                        holdEN = 0; end
             initialize: begin ensureEN = 1;
-                        scan = ~colScanHold; end
+                        scan = ~colScanHold; 
+                        holdEN = 0; end
             verify:     begin ensureEN = 1;
-                        scan = ~colScanHold; end
-            display:    begin scan = ~colScanHold;
-                        ensureEN = 1; end
-            hold:       begin scan = ~colScanHold;
-                        ensureEN = 1; end
-            default:    begin scan = 4'b1111;
-                        ensureEN = 0; end
+                        scan = ~colScanHold; 
+                        holdEN = 0; end
+            display:    begin scan = 4'b0;
+                        ensureEN = 1; 
+                        holdEN = 1; end
+            hold:       begin scan = 4'b0;
+                        ensureEN = 1; 
+                        holdEN = 1; end
+            default:    begin scan = 4'b1;
+                        ensureEN = 0; 
+                        holdEN = 0; end
         endcase
 
     assign displayDigits[7:4] = digitOne;
