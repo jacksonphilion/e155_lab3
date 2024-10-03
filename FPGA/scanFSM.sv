@@ -24,7 +24,7 @@ module scanFSM(
     logic   [3:0]   rowSenseHold;
     logic   [3:0]   colScanHold;
     logic   [3:0]   digitOne, digitZero, tempDigit;
-    logic           ensureEN, holdEN, topRail, botRail, holdBotRail;
+    logic           ensureEN, holdEN, topRail, botRail, holdBotRail, exitScan;
 
     // Call ensureCounter Module and feed in the control lines. This gets used in state initialize and verify.
     ensureCounter ensureCounterCall(clk, reset, ensureEN, sense, rowSenseHold, topRail, botRail);
@@ -36,15 +36,16 @@ module scanFSM(
     holdCounter holdCounterCall(clk, reset, holdEN, sense, holdBotRail);
 
     // Nextstate Logic
+    assign exitScan = ((sense==4'b0001)|(sense==4'b0010)|(sense==4'b0100)|(sense==4'b1000));
     always_comb
         case (state)
-            scanCol0:   if (sense !== 4'b0) nextstate = initialize;
+            scanCol0:   if (exitScan) nextstate = initialize;
                         else                nextstate = scanCol1;
-            scanCol1:   if (sense !== 4'b0) nextstate = initialize;
+            scanCol1:   if (exitScan) nextstate = initialize;
                         else                nextstate = scanCol2;
-            scanCol2:   if (sense !== 4'b0) nextstate = initialize;
+            scanCol2:   if (exitScan) nextstate = initialize;
                         else                nextstate = scanCol3;
-            scanCol3:   if (sense !== 4'b0) nextstate = initialize;
+            scanCol3:   if (exitScan) nextstate = initialize;
                         else                nextstate = scanCol0;
             initialize: nextstate = verify;
             verify:     if (botRail)        nextstate = scanCol0;
